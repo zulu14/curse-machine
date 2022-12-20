@@ -14,4 +14,5 @@ cd /home/container || exit 1
 
 # Run the startup command
 # shellcheck disable=SC2086
+PARSED=$(echo "${STARTUP}" | sed -e 's/{{/${/g' -e 's/}}/}/g' | eval echo "$(cat -)")
 exec env ${PARSED}
