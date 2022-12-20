@@ -1,35 +1,65 @@
-name: build oses
+name: Docker
+
 on:
-  workflow_dispatch:
   push:
     branches:
       - master
+
 jobs:
   push:
-    name: "cm:${{ matrix.oses }}"
-    runs-on: ubuntu-latest
+    name: Push
+    runs-on: ubuntu-20.04
+
     strategy:
       fail-fast: false
+
       matrix:
-        oses:
-          - ubuntu
+        image:
+          - {type: "generic", image: "alpine", PREFIX: "", SUFFIX: "", context: "./generic/alpine", platforms: "linux/amd64,linux/arm64"}
+          - {type: "generic", image: "debian", PREFIX: "", SUFFIX: "", context: "./generic/debian", platforms: "linux/amd64,linux/arm64"}
+          - {type: "generic", image: "ubi"   , PREFIX: "", SUFFIX: "", context: "./generic/ubi"   , platforms: "linux/amd64,linux/arm64"}
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: docker/setup-qemu-action@v2
-      - uses: docker/setup-buildx-action@v2
+      - name: Code Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+        if: ${{ matrix.image.platforms != 'linux/amd64' }}
+
+      - name: Install buildx
+        uses: docker/setup-buildx-action@v1
         with:
-          version: "v0.8.2"
+          version: v0.6.3
           buildkitd-flags: --debug
-      - uses: docker/login-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.REGISTRY_TOKEN }}
-      - uses: docker/build-push-action@v3
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Login to Quay
+        uses: docker/login-action@v1
         with:
-          context: ./oses/${{ matrix.oses }}
-          file: ./oses/${{ matrix.oses }}/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          registry: quay.io
+          username: matthewp
+          password: ${{ secrets.QUAY_SECRET }}
+
+      # - name: Login to Private Registry
+      #   uses: docker/login-action@v1
+      #   with:
+      #     registry: ${{ secrets.REGISTRY }}
+      #     username: ${{ secrets.REGISTRY_USERNAME }}
+      #     password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./${{ matrix.image.context }}
+          file: ./${{ matrix.image.type }}/${{ matrix.image.image }}/Dockerfile
+          platforms: ${{ matrix.image.platforms }}
           push: true
           tags: |
-            ghcr.io/zulu14/curse-machine:${{ matrix.oses }}
+            ghcr.io/zulu14/curse-machine:${{ matrix.image.PREFIX }}${{ matrix.image.image }}${{ matrix.image.SUFFIX }}
