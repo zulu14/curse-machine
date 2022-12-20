@@ -2,7 +2,7 @@ FROM         --platform=$TARGETOS/$TARGETARCH debian:bullseye-slim
 
 LABEL        author="Cursegroup company" maintainer="contact@cursegroup.com"
 
-LABEL        org.opencontainers.image.source="https://ghcr.io/cursestaff/curse-machine-ubuntu20.04"
+LABEL        org.opencontainers.image.source="https://github.com/zulu14/curse-machine-ubuntu20.04"
 LABEL        org.opencontainers.image.licenses=MIT
 
 ENV          DEBIAN_FRONTEND noninteractive
