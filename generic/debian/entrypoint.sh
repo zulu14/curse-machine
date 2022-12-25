@@ -33,5 +33,5 @@ export INTERNAL_IP
 # Switch to the container's working directory
 cd /home/container || exit 1
 
-
-exec env ${STARTUP}
+PARSED=$(echo "${STARTUP}" | sed -e 's/{{/${/g' -e 's/}}/}/g' | eval echo "$(cat -)")
+exec env ${PARSED}
