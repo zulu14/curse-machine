@@ -34,4 +34,4 @@ export INTERNAL_IP
 cd /home/container || exit 1
 
 
-${STARTUP}
+exec env ${STARTUP}
