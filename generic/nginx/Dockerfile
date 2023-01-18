@@ -28,7 +28,7 @@ LABEL		org.opencontainers.image.source="https://github.com/matthewpi/images"
 LABEL		org.opencontainers.image.licenses=MIT
 
 RUN apt-get update -y && apt-get upgrade -y
-RUN	apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 sudo
+RUN	apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 sudo curl wget
 RUN echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/sury-php.list
 RUN wget -qO - https://packages.sury.org/php/apt.gpg | sudo apt-key add -
 RUN apt-get update -y
