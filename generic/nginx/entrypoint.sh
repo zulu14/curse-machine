@@ -1,13 +1,11 @@
 #!/bin/bash
+sleep 1
 
-TZ=${TZ:-UTC}
-export TZ
- 
-# Switch to the container's working directory
-cd /home/container || exit 1
+cd /home/container
 
-# Convert all of the "{{VARIABLE}}" parts of the command into the expected shell
-# variable format of "${VARIABLE}" before evaluating the string and automatically
-PARSED=$(echo "${STARTUP}" | sed -e 's/{{/${/g' -e 's/}}/}/g' | eval echo "$(cat -)")
+# Replace Startup Variables
+MODIFIED_STARTUP=`eval echo $(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')`
+echo ":/home/container$ ${MODIFIED_STARTUP}"
 
-${PARSED}
+# Run the Server
+${MODIFIED_STARTUP}
