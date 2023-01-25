@@ -1,91 +1,103 @@
-#
-# NOTE: THIS DOCKERFILE IS GENERATED VIA "update.sh"
-#
-# PLEASE DO NOT EDIT IT DIRECTLY.
-#
-FROM nginx:1.22.1-alpine-slim
+FROM alpine:3.16
 
-ENV NJS_VERSION   0.7.9
-
-RUN set -x \
-    && apkArch="$(cat /etc/apk/arch)" \
-    && nginxPackages=" \
-        nginx=${NGINX_VERSION}-r${PKG_RELEASE} \
-        nginx-module-xslt=${NGINX_VERSION}-r${PKG_RELEASE} \
-        nginx-module-geoip=${NGINX_VERSION}-r${PKG_RELEASE} \
-        nginx-module-image-filter=${NGINX_VERSION}-r${PKG_RELEASE} \
-        nginx-module-njs=${NGINX_VERSION}.${NJS_VERSION}-r${PKG_RELEASE} \
-    " \
-# install prerequisites for public key and pkg-oss checks
-    && apk add --no-cache --virtual .checksum-deps \
-        openssl \
-    && case "$apkArch" in \
-        x86_64|aarch64) \
-# arches officially built by upstream
-            set -x \
-            && KEY_SHA512="e09fa32f0a0eab2b879ccbbc4d0e4fb9751486eedda75e35fac65802cc9faa266425edf83e261137a2f4d16281ce2c1a5f4502930fe75154723da014214f0655" \
-            && wget -O /tmp/nginx_signing.rsa.pub https://nginx.org/keys/nginx_signing.rsa.pub \
-            && if echo "$KEY_SHA512 */tmp/nginx_signing.rsa.pub" | sha512sum -c -; then \
-                echo "key verification succeeded!"; \
-                mv /tmp/nginx_signing.rsa.pub /etc/apk/keys/; \
-            else \
-                echo "key verification failed!"; \
-                exit 1; \
-            fi \
-            && apk add -X "https://nginx.org/packages/alpine/v$(egrep -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" --no-cache $nginxPackages \
-            ;; \
-        *) \
-# we're on an architecture upstream doesn't officially build for
-# let's build binaries from the published packaging sources
-            set -x \
-            && tempDir="$(mktemp -d)" \
-            && chown nobody:nobody $tempDir \
-            && apk add --no-cache --virtual .build-deps \
-                gcc \
-                libc-dev \
-                make \
-                openssl-dev \
-                pcre2-dev \
-                zlib-dev \
-                linux-headers \
-                libxslt-dev \
-                gd-dev \
-                geoip-dev \
-                libedit-dev \
-                bash \
-                alpine-sdk \
-                findutils \
-            && su nobody -s /bin/sh -c " \
-                export HOME=${tempDir} \
-                && cd ${tempDir} \
-                && curl -f -O https://hg.nginx.org/pkg-oss/archive/757.tar.gz \
-                && PKGOSSCHECKSUM=\"32a039e8d3cc54404a8ad4a31981e76a49632f1ebec2f45bb309689d6ba2f82e3e8aea8abf582b49931636ea53271b48a7e2f2ef8ebe35b167b3fe18b8b99852 *757.tar.gz\" \
-                && if [ \"\$(openssl sha512 -r 757.tar.gz)\" = \"\$PKGOSSCHECKSUM\" ]; then \
-                    echo \"pkg-oss tarball checksum verification succeeded!\"; \
-                else \
-                    echo \"pkg-oss tarball checksum verification failed!\"; \
-                    exit 1; \
-                fi \
-                && tar xzvf 757.tar.gz \
-                && cd pkg-oss-757 \
-                && cd alpine \
-                && make module-geoip module-image-filter module-njs module-xslt \
-                && apk index -o ${tempDir}/packages/alpine/${apkArch}/APKINDEX.tar.gz ${tempDir}/packages/alpine/${apkArch}/*.apk \
-                && abuild-sign -k ${tempDir}/.abuild/abuild-key.rsa ${tempDir}/packages/alpine/${apkArch}/APKINDEX.tar.gz \
-                " \
-            && cp ${tempDir}/.abuild/abuild-key.rsa.pub /etc/apk/keys/ \
-            && apk del .build-deps \
-            && apk add -X ${tempDir}/packages/alpine/ --no-cache $nginxPackages \
-            ;; \
-    esac \
-# remove checksum deps
-    && apk del .checksum-deps \
-# if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
-    && if [ -n "$tempDir" ]; then rm -rf "$tempDir"; fi \
-    && if [ -n "/etc/apk/keys/abuild-key.rsa.pub" ]; then rm -f /etc/apk/keys/abuild-key.rsa.pub; fi \
-    && if [ -n "/etc/apk/keys/nginx_signing.rsa.pub" ]; then rm -f /etc/apk/keys/nginx_signing.rsa.pub; fi \
-# Bring in curl and ca-certificates to make registering on DNS SD easier
-    && apk add --no-cache curl ca-certificates
+RUN apk --update --no-cache add ca-certificates
+RUN apk add \
+    build-base \
+    pcre \
+    pcre-dev \
+    openssl \
+    openssl-dev \
+    zlib \
+    zlib-dev \
+    tar \
+    bash \
+    wget \
+    curl 
+    
+RUN apk add --no-cache \
+    php81 \ 
+    php81-bcmath \
+    php81-bz2 \
+    php81-calendar \
+    php81-cgi \
+    php81-common \
+    php81-ctype \
+    php81-curl \
+    php81-dba \
+    php81-dom \
+    php81-embed \
+    php81-enchant \
+    php81-exif \
+    php81-ffi \
+    php81-fileinfo \
+    php81-fpm \
+    php81-ftp \
+    php81-gd \
+    php81-gettext \
+    php81-gmp \
+    php81-iconv \
+    php81-imap \
+    php81-intl \
+    php81-ldap \
+    php81-litespeed \
+    php81-mbstring \
+    php81-mysqli \
+    php81-mysqlnd \
+    php81-odbc \
+    php81-opcache \
+    php81-openssl \
+    php81-pcntl \
+    php81-pdo \
+    php81-pdo_dblib \
+    php81-pdo_mysql \
+    php81-pdo_odbc \
+    php81-pdo_pgsql \
+    php81-pdo_sqlite \
+    php81-pear \
+    php81-pgsql \
+    php81-phar \
+    php81-phpdbg \
+    php81-posix \
+    php81-pspell \
+    php81-session \
+    php81-shmop \
+    php81-simplexml \
+    php81-snmp \
+    php81-soap \
+    php81-sockets \
+    php81-sodium \
+    php81-sqlite3 \
+    php81-sysvmsg \
+    php81-sysvsem \
+    php81-sysvshm \
+    php81-tidy \
+    php81-tokenizer \
+    php81-xml \
+    php81-xmlreader \
+    php81-xmlwriter \
+    php81-xsl \
+    php81-zip
+ 
+RUN wget https://nginx.org/download/nginx-1.23.3.tar.gz \
+ && tar zxf nginx-1.23.3.tar.gz \
+ && cd nginx-1.23.3 \
+ && ./configure \
+    --with-http_mp4_module \
+    --with-http_sub_module \
+    --prefix=/var/www/html \
+    --sbin-path=/usr/sbin/nginx \
+    --http-log-path=/home/container/nginx/access.log \
+    --error-log-path=/home/container/nginx/error.log \
+    --with-pcre \
+    --lock-path=/var/lock/nginx.lock \
+    --pid-path=/var/run/nginx.pid \
+    --with-http_ssl_module \
+    --modules-path=/etc/nginx/modules \
+    --with-http_v2_module \
+    --with-stream=dynamic \
+    --with-http_addition_module \
+&& make \
+&& make install
 
 USER container
 ENV  USER container
